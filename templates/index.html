@@ -1,124 +1,173 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🎟️ Ticket System</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎟️ Ticket System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="d-flex flex-column align-items-center justify-content-start">
 
-  <body class="d-flex flex-column align-items-center justify-content-center">
-    <div class="container text-center mt-4">
-      <h2 class="mb-4">🎟️ Ticket Image System</h2>
+<div class="container mt-4">
 
-      <!-- Tabs -->
-      <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">📤 Upload</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">🖼️ Dashboard</button>
-        </li>
-      </ul>
+  <h2 class="mb-4 text-center">🎟️ Ticket Image System</h2>
 
-      <div class="tab-content" id="myTabContent">
-        <!-- UPLOAD TAB -->
-        <div class="tab-pane fade show active" id="upload" role="tabpanel">
-          <input type="text" id="uploadTicket" class="form-control mb-3" placeholder="Enter Ticket Number" />
-          <input type="file" id="uploadFiles" class="form-control mb-3" multiple />
-          <button class="btn btn-primary w-100" onclick="uploadImages()">⬆️ Upload</button>
-          <div id="uploadResult" class="mt-3"></div>
-        </div>
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3" id="tabSelector" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">📤 Upload</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">🖼️ View Images</button>
+    </li>
+  </ul>
 
-        <!-- DASHBOARD TAB -->
-        <div class="tab-pane fade" id="dashboard" role="tabpanel">
-          <input type="text" id="ticketInput" class="form-control mb-3" placeholder="Enter Ticket Number" />
-          <button class="btn btn-success w-100" onclick="loadImages()">🔍 Search</button>
-          <div id="gallery" class="gallery row g-3 mt-3"></div>
-        </div>
-      </div>
+  <div class="tab-content" id="tabContent">
+
+    <!-- UPLOAD TAB -->
+    <div class="tab-pane fade show active" id="upload" role="tabpanel">
+      <input type="text" id="uploadTicket" class="form-control mb-3" placeholder="Enter Ticket Number">
+      <input type="file" id="uploadFiles" class="form-control mb-3" multiple>
+
+      <!-- Preview Thumbnails -->
+      <div id="previewGallery" class="row g-2 mb-2"></div>
+
+      <button class="btn btn-primary w-100 mb-3" onclick="uploadImages()">⬆️ Upload</button>
+      <div id="uploadResult" class="mb-3"></div>
     </div>
 
-    <!-- Dark Mode Toggle -->
-    <button id="darkToggle" class="btn btn-sm btn-secondary" onclick="toggleTheme()">🌙</button>
+    <!-- DASHBOARD TAB -->
+    <div class="tab-pane fade" id="dashboard" role="tabpanel">
+      <input type="text" id="ticketInput" class="form-control mb-3" placeholder="Enter Ticket Number">
+      <button class="btn btn-success w-100 mb-3" onclick="loadImages()">🔍 Search</button>
+      <div id="gallery" class="gallery row g-3 mt-2"></div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </div>
 
-    <script>
-      // === AUTO REFRESH EVERY 30 SECONDS ===
-      setInterval(() => {
-        const ticket = document.getElementById("ticketInput").value.trim();
-        if (ticket) loadImages();
-      }, 30000);
+</div>
 
-      // === DARK MODE TOGGLE ===
-      function toggleTheme() {
-        const html = document.documentElement;
-        const current = html.getAttribute("data-bs-theme");
-        html.setAttribute("data-bs-theme", current === "dark" ? "light" : "dark");
-      }
+<!-- Dark Mode Toggle -->
+<button id="darkToggle" class="btn btn-sm btn-secondary" onclick="toggleTheme()">🌙</button>
 
-      // === UPLOAD IMAGES ===
-      async function uploadImages() {
-        const ticket = document.getElementById("uploadTicket").value.trim();
-        const files = document.getElementById("uploadFiles").files;
-        const result = document.getElementById("uploadResult");
-        result.innerHTML = "";
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-        if (!ticket || files.length === 0) {
-          result.innerHTML = "<div class='text-danger'>Please provide ticket number and select images.</div>";
-          return;
-        }
+<script>
+  const previewGallery = document.getElementById("previewGallery");
+  const uploadFilesInput = document.getElementById("uploadFiles");
 
-        const formData = new FormData();
-        formData.append("ticket_number", ticket);
-        for (let file of files) formData.append("images", file);
+  // Show previews when files are selected
+  uploadFilesInput.addEventListener("change", () => {
+    previewGallery.innerHTML = "";
+    Array.from(uploadFilesInput.files).forEach((file, index) => {
+      const col = document.createElement("div");
+      col.classList.add("col-6", "col-md-4", "text-center", "mb-2");
 
-        const res = await fetch("/upload", { method: "POST", body: formData });
-        const data = await res.json();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        col.innerHTML = `
+          <img src="${e.target.result}" class="img-fluid rounded mb-1" alt="${file.name}">
+          <div class="progress mb-1">
+            <div class="progress-bar" id="progress-${index}" role="progressbar" style="width: 0%"></div>
+          </div>
+          <small>${file.name}</small>
+        `;
+      };
+      reader.readAsDataURL(file);
+      previewGallery.appendChild(col);
+    });
+  });
 
-        if (data.error) result.innerHTML = `<div class='text-danger'>${data.error}</div>`;
-        else result.innerHTML = `<div class='text-success'>Uploaded: ${data.uploaded.join(", ")}</div>`;
-      }
+  // Upload images with progress bars
+  async function uploadImages() {
+    const ticket = document.getElementById("uploadTicket").value.trim();
+    const files = uploadFilesInput.files;
+    const result = document.getElementById("uploadResult");
+    result.innerHTML = "";
 
-      // === LOAD IMAGES FROM FLASK ===
-      async function loadImages() {
-        const ticket = document.getElementById("ticketInput").value.trim();
-        const gallery = document.getElementById("gallery");
-        gallery.innerHTML = "";
+    if (!ticket || files.length === 0) {
+      result.innerHTML = "<div class='text-danger'>Please provide ticket number and select images.</div>";
+      return;
+    }
 
-        if (!ticket) {
-          gallery.innerHTML = "<div class='text-muted'>Please enter a ticket number.</div>";
-          return;
-        }
+    const uploadedFiles = [];
 
-        const formData = new FormData();
-        formData.append("ticket_number", ticket);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append("ticket_number", ticket);
+      formData.append("images", file);
 
-        const response = await fetch("/get_images", { method: "POST", body: formData });
-        const data = await response.json();
+      await new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/upload");
 
-        if (data.error) {
-          gallery.innerHTML = `<div class='text-danger'>${data.error}</div>`;
-          return;
-        }
-
-        if (!data.images || data.images.length === 0) {
-          gallery.innerHTML = "<div class='text-warning'>No images found.</div>";
-          return;
-        }
-
-        data.images.forEach((url) => {
-          const col = document.createElement("div");
-          col.classList.add("col-12", "col-md-4");
-          col.innerHTML = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Ticket Image" />`;
-          gallery.appendChild(col);
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            document.getElementById(`progress-${i}`).style.width = `${percent}%`;
+          }
         });
-      }
-    </script>
-  </body>
+
+        xhr.onload = () => {
+          if (xhr.status === 200) uploadedFiles.push(file.name);
+          resolve();
+        };
+        xhr.send(formData);
+      });
+    }
+
+    result.innerHTML = `<div class='text-success'>Uploaded: ${uploadedFiles.join(", ")}</div>`;
+  }
+
+  // Load images from Flask
+  async function loadImages() {
+    const ticket = document.getElementById("ticketInput").value.trim();
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
+
+    if (!ticket) {
+      gallery.innerHTML = "<div class='text-muted'>Please enter a ticket number.</div>";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("ticket_number", ticket);
+
+    const response = await fetch("/get_images", { method: "POST", body: formData });
+    const data = await response.json();
+
+    if (data.error) {
+      gallery.innerHTML = `<div class='text-danger'>${data.error}</div>`;
+      return;
+    }
+
+    if (!data.images || data.images.length === 0) {
+      gallery.innerHTML = "<div class='text-warning'>No images found.</div>";
+      return;
+    }
+
+    data.images.forEach((url) => {
+      const col = document.createElement("div");
+      col.classList.add("col-12", "col-md-4");
+      col.innerHTML = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Ticket Image" />`;
+      gallery.appendChild(col);
+    });
+  }
+
+  // Auto-refresh dashboard every 30s
+  setInterval(() => {
+    const ticket = document.getElementById("ticketInput").value.trim();
+    if (ticket) loadImages();
+  }, 30000);
+
+  // Dark mode toggle
+  function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute("data-bs-theme");
+    html.setAttribute("data-bs-theme", current === "dark" ? "light" : "dark");
+  }
+</script>
+</body>
 </html>

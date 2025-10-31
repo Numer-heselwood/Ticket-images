@@ -7,8 +7,7 @@ body {
 }
 
 .container {
-  max-width: 480px;
-  margin-top: 25px;
+  max-width: 600px;
   padding: 10px;
 }
 
@@ -20,6 +19,15 @@ body {
 
 .gallery img:hover {
   transform: scale(1.02);
+}
+
+.progress {
+  height: 6px;
+}
+
+.progress-bar {
+  background-color: #0d6efd;
+  transition: width 0.2s;
 }
 
 #darkToggle {
@@ -34,4 +42,8 @@ body {
 [data-bs-theme="dark"] body {
   background-color: #121212;
   color: #e2e2e2;
+}
+
+[data-bs-theme="dark"] .progress-bar {
+  background-color: #0dcaf0;
 }

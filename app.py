@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import requests
 from io import BytesIO
-from PIL import Image
 from onedrive_auth import get_token
 
 app = Flask(__name__)
