@@ -3,3 +3,5 @@ Pillow
 requests
 streamlit-autorefresh
 msal
+flask
+gunicorn
