@@ -1,0 +1,37 @@
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  transition: background-color 0.3s, color 0.3s;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 480px;
+  margin-top: 25px;
+  padding: 10px;
+}
+
+.gallery img {
+  width: 100%;
+  border-radius: 12px;
+  transition: transform 0.2s;
+}
+
+.gallery img:hover {
+  transform: scale(1.02);
+}
+
+#darkToggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  border-radius: 50%;
+  padding: 0.5rem 0.7rem;
+}
+
+[data-bs-theme="dark"] body {
+  background-color: #121212;
+  color: #e2e2e2;
+}

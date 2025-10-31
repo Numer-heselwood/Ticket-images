@@ -1,0 +1,82 @@
+<!-- UPLOAD TAB -->
+<div class="tab-pane fade show active" id="upload" role="tabpanel">
+  <input type="text" id="uploadTicket" class="form-control mb-3" placeholder="Enter Ticket Number" />
+  <input type="file" id="uploadFiles" class="form-control mb-3" multiple />
+
+  <!-- Preview Thumbnails -->
+  <div id="previewGallery" class="row g-2 mb-2"></div>
+
+  <button class="btn btn-primary w-100" onclick="uploadImages()">⬆️ Upload</button>
+  <div id="uploadResult" class="mt-3"></div>
+</div>
+
+<script>
+  const previewGallery = document.getElementById("previewGallery");
+  const uploadFilesInput = document.getElementById("uploadFiles");
+
+  // Show previews when files are selected
+  uploadFilesInput.addEventListener("change", () => {
+    previewGallery.innerHTML = "";
+    Array.from(uploadFilesInput.files).forEach((file, index) => {
+      const col = document.createElement("div");
+      col.classList.add("col-4", "col-md-3", "text-center");
+
+      // Image thumbnail
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        col.innerHTML = `
+          <img src="${e.target.result}" class="img-fluid rounded mb-1" alt="${file.name}">
+          <div class="progress">
+            <div class="progress-bar" id="progress-${index}" role="progressbar" style="width: 0%"></div>
+          </div>
+          <small>${file.name}</small>
+        `;
+      };
+      reader.readAsDataURL(file);
+      previewGallery.appendChild(col);
+    });
+  });
+
+  // Upload images with progress bars
+  async function uploadImages() {
+    const ticket = document.getElementById("uploadTicket").value.trim();
+    const files = uploadFilesInput.files;
+    const result = document.getElementById("uploadResult");
+    result.innerHTML = "";
+
+    if (!ticket || files.length === 0) {
+      result.innerHTML = "<div class='text-danger'>Please provide ticket number and select images.</div>";
+      return;
+    }
+
+    const uploadedFiles = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append("ticket_number", ticket);
+      formData.append("images", file);
+
+      await new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/upload");
+
+        // Track progress
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            document.getElementById(`progress-${i}`).style.width = `${percent}%`;
+          }
+        });
+
+        xhr.onload = () => {
+          if (xhr.status === 200) uploadedFiles.push(file.name);
+          resolve();
+        };
+        xhr.send(formData);
+      });
+    }
+
+    result.innerHTML = `<div class='text-success'>Uploaded: ${uploadedFiles.join(", ")}</div>`;
+  }
+</script>

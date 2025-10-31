@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta http-equiv="refresh" content="{{ refresh_interval }}">
+</head>
+<body>
+    <div class="top-bar">
+        <h1>🎟️ Ticket Dashboard</h1>
+        <label class="switch">
+            Dark Mode
+            <input type="checkbox" id="dark-toggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+
+    <form method="get" action="/">
+        <input type="text" name="ticket" placeholder="Enter ticket number" value="{{ ticket_number }}">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if images %}
+        <div class="gallery">
+            {% for img in images %}
+                <div class="image-card">
+                    <img src="{{ url_for('static', filename=ticket_number + '/' + img) }}" alt="{{ img }}">
+                    <p>{{ img }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif ticket_number %}
+        <p>No images found for ticket {{ ticket_number }}</p>
+    {% endif %}
+
+    <script>
+        const toggle = document.getElementById("dark-toggle");
+        toggle.addEventListener("change", () => {
+            document.body.classList.toggle("dark-mode");
+        });
+    </script>
+</body>
+</html>
+
