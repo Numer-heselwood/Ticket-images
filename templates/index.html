@@ -1,173 +1,211 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎟️ Ticket System</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎟️ Ticket Image System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body class="d-flex flex-column align-items-center justify-content-start">
 
-<div class="container mt-4">
+<body class="d-flex flex-column align-items-center justify-content-center">
+  <div class="container text-center mt-4">
+    <h2 class="mb-4">🎟️ Ticket Image System</h2>
 
-  <h2 class="mb-4 text-center">🎟️ Ticket Image System</h2>
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">📤 Upload</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">🖼️ View Images</button>
+      </li>
+    </ul>
 
-  <!-- Tabs -->
-  <ul class="nav nav-tabs mb-3" id="tabSelector" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">📤 Upload</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">🖼️ View Images</button>
-    </li>
-  </ul>
+    <div class="tab-content" id="myTabContent">
 
-  <div class="tab-content" id="tabContent">
+      <!-- ================== UPLOAD TAB ================== -->
+      <div class="tab-pane fade show active" id="upload" role="tabpanel">
+        <input type="text" id="uploadTicket" class="form-control mb-3" placeholder="Enter Ticket Number" />
+        <input type="file" id="uploadFiles" class="form-control mb-3" multiple />
 
-    <!-- UPLOAD TAB -->
-    <div class="tab-pane fade show active" id="upload" role="tabpanel">
-      <input type="text" id="uploadTicket" class="form-control mb-3" placeholder="Enter Ticket Number">
-      <input type="file" id="uploadFiles" class="form-control mb-3" multiple>
+        <div id="previewGallery" class="row g-2 mb-3"></div>
 
-      <!-- Preview Thumbnails -->
-      <div id="previewGallery" class="row g-2 mb-2"></div>
+        <button class="btn btn-primary w-100" onclick="checkTicket()">⬆️ Upload</button>
+        <div id="uploadResult" class="mt-3"></div>
+      </div>
 
-      <button class="btn btn-primary w-100 mb-3" onclick="uploadImages()">⬆️ Upload</button>
-      <div id="uploadResult" class="mb-3"></div>
+      <!-- ================== VIEW TAB ================== -->
+      <div class="tab-pane fade" id="dashboard" role="tabpanel">
+        <input type="text" id="ticketInput" class="form-control mb-3" placeholder="Enter Ticket Number" />
+        <button class="btn btn-success w-100" onclick="loadImages()">🔍 Search</button>
+        <div id="gallery" class="gallery row g-3 mt-3"></div>
+      </div>
     </div>
-
-    <!-- DASHBOARD TAB -->
-    <div class="tab-pane fade" id="dashboard" role="tabpanel">
-      <input type="text" id="ticketInput" class="form-control mb-3" placeholder="Enter Ticket Number">
-      <button class="btn btn-success w-100 mb-3" onclick="loadImages()">🔍 Search</button>
-      <div id="gallery" class="gallery row g-3 mt-2"></div>
-    </div>
-
   </div>
 
-</div>
+  <!-- ================== DARK MODE TOGGLE ================== -->
+  <button id="darkToggle" class="btn btn-sm btn-secondary" onclick="toggleTheme()">🌙</button>
 
-<!-- Dark Mode Toggle -->
-<button id="darkToggle" class="btn btn-sm btn-secondary" onclick="toggleTheme()">🌙</button>
+  <!-- ================== CONFIRMATION MODAL ================== -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Replace Existing Images?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          A folder already exists for this ticket number. Uploading new images will delete the old ones.<br><br>
+          Are you sure you want to continue?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmReplace">Yes, Replace</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-  const previewGallery = document.getElementById("previewGallery");
-  const uploadFilesInput = document.getElementById("uploadFiles");
+  <script>
+    const previewGallery = document.getElementById("previewGallery");
+    const uploadFilesInput = document.getElementById("uploadFiles");
+    const confirmModal = new bootstrap.Modal(document.getElementById("confirmModal"));
 
-  // Show previews when files are selected
-  uploadFilesInput.addEventListener("change", () => {
-    previewGallery.innerHTML = "";
-    Array.from(uploadFilesInput.files).forEach((file, index) => {
-      const col = document.createElement("div");
-      col.classList.add("col-6", "col-md-4", "text-center", "mb-2");
+    // === AUTO REFRESH EVERY 30 SECONDS ===
+    setInterval(() => {
+      const ticket = document.getElementById("ticketInput").value.trim();
+      if (ticket) loadImages();
+    }, 30000);
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        col.innerHTML = `
-          <img src="${e.target.result}" class="img-fluid rounded mb-1" alt="${file.name}">
-          <div class="progress mb-1">
-            <div class="progress-bar" id="progress-${index}" role="progressbar" style="width: 0%"></div>
-          </div>
-          <small>${file.name}</small>
-        `;
-      };
-      reader.readAsDataURL(file);
-      previewGallery.appendChild(col);
-    });
-  });
-
-  // Upload images with progress bars
-  async function uploadImages() {
-    const ticket = document.getElementById("uploadTicket").value.trim();
-    const files = uploadFilesInput.files;
-    const result = document.getElementById("uploadResult");
-    result.innerHTML = "";
-
-    if (!ticket || files.length === 0) {
-      result.innerHTML = "<div class='text-danger'>Please provide ticket number and select images.</div>";
-      return;
+    // === DARK MODE TOGGLE ===
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute("data-bs-theme");
+      html.setAttribute("data-bs-theme", current === "dark" ? "light" : "dark");
     }
 
-    const uploadedFiles = [];
+    // === PREVIEW SELECTED FILES ===
+    uploadFilesInput.addEventListener("change", () => {
+      previewGallery.innerHTML = "";
+      Array.from(uploadFilesInput.files).forEach((file, i) => {
+        const col = document.createElement("div");
+        col.classList.add("col-6", "col-md-4");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          col.innerHTML = `
+            <img src="${e.target.result}" class="img-fluid rounded mb-1" alt="${file.name}">
+            <div class="progress">
+              <div class="progress-bar" id="progress-${i}" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small>${file.name}</small>
+          `;
+        };
+        reader.readAsDataURL(file);
+        previewGallery.appendChild(col);
+      });
+    });
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    // === CHECK IF TICKET EXISTS BEFORE UPLOAD ===
+    async function checkTicket() {
+      const ticket = document.getElementById("uploadTicket").value.trim();
+      if (!ticket) return alert("Enter a ticket number first.");
+
       const formData = new FormData();
       formData.append("ticket_number", ticket);
-      formData.append("images", file);
 
-      await new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/upload");
+      const res = await fetch("/check_ticket", { method: "POST", body: formData });
+      const data = await res.json();
 
-        xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) {
-            const percent = (e.loaded / e.total) * 100;
-            document.getElementById(`progress-${i}`).style.width = `${percent}%`;
-          }
-        });
-
-        xhr.onload = () => {
-          if (xhr.status === 200) uploadedFiles.push(file.name);
-          resolve();
+      if (data.exists) {
+        confirmModal.show();
+        document.getElementById("confirmReplace").onclick = () => {
+          confirmModal.hide();
+          uploadImages(ticket);
         };
-        xhr.send(formData);
+      } else {
+        uploadImages(ticket);
+      }
+    }
+
+    // === UPLOAD WITH PROGRESS BARS ===
+    async function uploadImages(ticket) {
+      const files = uploadFilesInput.files;
+      const result = document.getElementById("uploadResult");
+      result.innerHTML = "";
+
+      if (!ticket || files.length === 0) {
+        result.innerHTML = "<div class='text-danger'>Please provide ticket number and select images.</div>";
+        return;
+      }
+
+      const uploadedFiles = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append("ticket_number", ticket);
+        formData.append("images", file);
+
+        await new Promise((resolve) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "/upload");
+
+          xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+              const percent = (e.loaded / e.total) * 100;
+              document.getElementById(`progress-${i}`).style.width = `${percent}%`;
+            }
+          });
+
+          xhr.onload = () => {
+            if (xhr.status === 200) uploadedFiles.push(file.name);
+            resolve();
+          };
+
+          xhr.send(formData);
+        });
+      }
+
+      result.innerHTML = `<div class='text-success'>Uploaded: ${uploadedFiles.join(", ")}</div>`;
+    }
+
+    // === LOAD IMAGES (VIEW TAB) ===
+    async function loadImages() {
+      const ticket = document.getElementById("ticketInput").value.trim();
+      const gallery = document.getElementById("gallery");
+      gallery.innerHTML = "";
+
+      if (!ticket) {
+        gallery.innerHTML = "<div class='text-muted'>Please enter a ticket number.</div>";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("ticket_number", ticket);
+
+      const res = await fetch("/get_images", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (data.error) {
+        gallery.innerHTML = `<div class='text-danger'>${data.error}</div>`;
+        return;
+      }
+
+      if (!data.images || data.images.length === 0) {
+        gallery.innerHTML = "<div class='text-warning'>No images found.</div>";
+        return;
+      }
+
+      data.images.forEach((url) => {
+        const col = document.createElement("div");
+        col.classList.add("col-12", "col-md-4");
+        col.innerHTML = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Ticket Image" />`;
+        gallery.appendChild(col);
       });
     }
-
-    result.innerHTML = `<div class='text-success'>Uploaded: ${uploadedFiles.join(", ")}</div>`;
-  }
-
-  // Load images from Flask
-  async function loadImages() {
-    const ticket = document.getElementById("ticketInput").value.trim();
-    const gallery = document.getElementById("gallery");
-    gallery.innerHTML = "";
-
-    if (!ticket) {
-      gallery.innerHTML = "<div class='text-muted'>Please enter a ticket number.</div>";
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("ticket_number", ticket);
-
-    const response = await fetch("/get_images", { method: "POST", body: formData });
-    const data = await response.json();
-
-    if (data.error) {
-      gallery.innerHTML = `<div class='text-danger'>${data.error}</div>`;
-      return;
-    }
-
-    if (!data.images || data.images.length === 0) {
-      gallery.innerHTML = "<div class='text-warning'>No images found.</div>";
-      return;
-    }
-
-    data.images.forEach((url) => {
-      const col = document.createElement("div");
-      col.classList.add("col-12", "col-md-4");
-      col.innerHTML = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Ticket Image" />`;
-      gallery.appendChild(col);
-    });
-  }
-
-  // Auto-refresh dashboard every 30s
-  setInterval(() => {
-    const ticket = document.getElementById("ticketInput").value.trim();
-    if (ticket) loadImages();
-  }, 30000);
-
-  // Dark mode toggle
-  function toggleTheme() {
-    const html = document.documentElement;
-    const current = html.getAttribute("data-bs-theme");
-    html.setAttribute("data-bs-theme", current === "dark" ? "light" : "dark");
-  }
-</script>
+  </script>
 </body>
 </html>
