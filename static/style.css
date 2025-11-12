@@ -7,27 +7,20 @@ body {
 }
 
 .container {
-  max-width: 600px;
+  max-width: 480px;
+  margin-top: 25px;
   padding: 10px;
 }
 
-.gallery img {
+.gallery img, video {
   width: 100%;
   border-radius: 12px;
   transition: transform 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
-.gallery img:hover {
+.gallery img:hover, video:hover {
   transform: scale(1.02);
-}
-
-.progress {
-  height: 6px;
-}
-
-.progress-bar {
-  background-color: #0d6efd;
-  transition: width 0.2s;
 }
 
 #darkToggle {
@@ -39,11 +32,15 @@ body {
   padding: 0.5rem 0.7rem;
 }
 
-[data-bs-theme="dark"] body {
-  background-color: #121212;
-  color: #e2e2e2;
+.progress {
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-[data-bs-theme="dark"] .progress-bar {
-  background-color: #0dcaf0;
+.progress-bar {
+  background-color: #007bff;
+  height: 100%;
+  transition: width 0.3s;
 }

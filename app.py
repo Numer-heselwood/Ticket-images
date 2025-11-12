@@ -6,62 +6,28 @@ app = Flask(__name__)
 
 BASE_FOLDER = "/Ticket-images"
 
-
 @app.route("/")
 def index():
-    """Main page with both tabs: Upload and View."""
     return render_template("index.html")
 
-
-# ✅ Route used to check if a ticket folder already exists
-@app.route("/check_ticket", methods=["POST"])
-def check_ticket():
-    ticket_number = request.form.get("ticket_number", "").strip()
-    if not ticket_number:
-        return jsonify({"error": "No ticket number provided"}), 400
-
-    access_token = get_token()
-    headers = {"Authorization": f"Bearer {access_token}"}
-    folder_path = f"{BASE_FOLDER}/{ticket_number}"
-    check_url = f"https://graph.microsoft.com/v1.0/me/drive/root:{folder_path}"
-
-    response = requests.get(check_url, headers=headers)
-    if response.status_code == 200:
-        return jsonify({"exists": True})
-    elif response.status_code == 404:
-        return jsonify({"exists": False})
-    else:
-        return jsonify({"error": "Unable to check folder status"}), response.status_code
-
-
-# ✅ Upload new images (and optionally replace old ones)
 @app.route("/upload", methods=["POST"])
-def upload_images():
+def upload_media():
     ticket_number = request.form.get("ticket_number", "").strip()
-    files = request.files.getlist("images")
+    files = request.files.getlist("media")
 
     if not ticket_number or not files:
-        return jsonify({"error": "Please provide ticket number and images"}), 400
+        return jsonify({"error": "Please provide ticket number and files"}), 400
 
     access_token = get_token()
     headers = {"Authorization": f"Bearer {access_token}"}
-    folder_path = f"{BASE_FOLDER}/{ticket_number}"
 
     # Check if folder exists
+    folder_path = f"{BASE_FOLDER}/{ticket_number}"
     check_url = f"https://graph.microsoft.com/v1.0/me/drive/root:{folder_path}"
     check_res = requests.get(check_url, headers=headers)
 
-    # If exists, delete all existing files before uploading new ones
-    if check_res.status_code == 200:
-        list_url = f"https://graph.microsoft.com/v1.0/me/drive/root:{folder_path}:/children"
-        list_res = requests.get(list_url, headers=headers)
-        if list_res.status_code == 200:
-            items = list_res.json().get("value", [])
-            for item in items:
-                del_url = f"https://graph.microsoft.com/v1.0/me/drive/items/{item['id']}"
-                requests.delete(del_url, headers=headers)
-    else:
-        # Create folder if it doesn't exist
+    # Create folder if missing
+    if check_res.status_code == 404:
         create_url = f"https://graph.microsoft.com/v1.0/me/drive/root:{BASE_FOLDER}:/children"
         folder_data = {
             "name": ticket_number,
@@ -69,6 +35,12 @@ def upload_images():
             "@microsoft.graph.conflictBehavior": "rename"
         }
         requests.post(create_url, headers={**headers, "Content-Type": "application/json"}, json=folder_data)
+
+    # Delete existing media before uploading new ones (overwrite mode)
+    delete_url = f"https://graph.microsoft.com/v1.0/me/drive/root:{folder_path}:/children"
+    existing = requests.get(delete_url, headers=headers).json().get("value", [])
+    for item in existing:
+        requests.delete(f"https://graph.microsoft.com/v1.0/me/drive/items/{item['id']}", headers=headers)
 
     # Upload new files
     uploaded = []
@@ -81,10 +53,8 @@ def upload_images():
 
     return jsonify({"uploaded": uploaded})
 
-
-# ✅ Fetch images for the view tab
-@app.route("/get_images", methods=["POST"])
-def get_images():
+@app.route("/get_media", methods=["POST"])
+def get_media():
     ticket_number = request.form.get("ticket_number", "").strip()
     if not ticket_number:
         return jsonify({"error": "No ticket number provided"}), 400
@@ -96,17 +66,20 @@ def get_images():
 
     response = requests.get(list_url, headers=headers)
     if response.status_code != 200:
-        return jsonify({"error": "Unable to fetch images"}), response.status_code
+        return jsonify({"error": "Unable to fetch media"}), response.status_code
 
     data = response.json()
-    images = [
-        item["@microsoft.graph.downloadUrl"]
-        for item in data.get("value", [])
-        if item["name"].lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".heic"))
-    ]
+    items = []
+    for item in data.get("value", []):
+        name = item["name"].lower()
+        url = item["@microsoft.graph.downloadUrl"]
 
-    return jsonify({"images": images})
+        if name.endswith((".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".heic")):
+            items.append({"type": "image", "url": url, "name": item["name"]})
+        elif name.endswith((".mp4", ".mov", ".avi", ".mkv", ".webm")):
+            items.append({"type": "video", "url": url, "name": item["name"]})
 
+    return jsonify({"media": items})
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5050)
