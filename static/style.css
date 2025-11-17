@@ -1,46 +1,83 @@
+/* ----------------------- */
+/* BODY & CONTAINER STYLES */
+/* ----------------------- */
 body {
-  background-color: var(--bs-body-bg);
-  color: var(--bs-body-color);
-  transition: background-color 0.3s, color 0.3s;
+  background-color: #f8f9fa;
+  color: #212529;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
 }
 
 .container {
-  max-width: 480px;
-  margin-top: 25px;
-  padding: 10px;
+  max-width: 960px;
+  margin-top: 20px;
 }
 
-.gallery img, video {
+/* ----------------------- */
+/* IMAGE & VIDEO GALLERY */
+/* ----------------------- */
+.gallery img,
+.gallery video {
   width: 100%;
   border-radius: 12px;
   transition: transform 0.2s;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.gallery img:hover, video:hover {
-  transform: scale(1.02);
+.gallery img:hover,
+.gallery video:hover {
+  transform: scale(1.03);
 }
 
-#darkToggle {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 1000;
-  border-radius: 50%;
-  padding: 0.5rem 0.7rem;
-}
-
+/* ----------------------- */
+/* PROGRESS BARS */
+/* ----------------------- */
 .progress {
   height: 6px;
   background-color: #e0e0e0;
   border-radius: 3px;
   overflow: hidden;
+  margin-bottom: 4px;
 }
 
 .progress-bar {
-  background-color: #007bff;
+  background-color: #0d6efd;
   height: 100%;
-  transition: width 0.3s;
+  transition: width 0.3s ease;
+}
+
+/* ----------------------- */
+/* UPLOAD PREVIEW CARDS */
+/* ----------------------- */
+#previewGallery .col-4,
+#previewGallery .col-md-3 {
+  margin-bottom: 12px;
+}
+
+#previewGallery img,
+#previewGallery video {
+  border-radius: 10px;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* ----------------------- */
+/* BACKUP BUTTON & ALERTS */
+/* ----------------------- */
+#backupBtn {
+  margin-top: 12px;
+}
+
+/* Alert messages inside tabs */
+.text-success, .text-danger, .text-warning, .text-muted {
+  margin-top: 6px;
+}
+
+/* ----------------------- */
+/* RESPONSIVE SPACING */
+/* ----------------------- */
+@media (max-width: 768px) {
+  .gallery .col-md-4 {
+    margin-bottom: 15px;
+  }
 }
